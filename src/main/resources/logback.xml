@@ -8,28 +8,19 @@
         </encoder>
     </appender>
 
-    <!-- LogAI Remote Appender - sends logs to Supabase -->
-    <appender name="LOGAI_REMOTE" class="com.logai.remote.RemoteLogAppender">
-        <!-- Supabase Configuration -->
-        <supabaseUrl>https://rdlhvdpuxddbryhepukn.supabase.co</supabaseUrl>
-        <supabaseKey>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkbGh2ZHB1eGRkYnJ5aGVwdWtuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0MDQyNjksImV4cCI6MjA3OTk4MDI2OX0.8Pm2NH4twqhtJgBxdysbmB-y6V-dh_-FHwyUJUHG5kk</supabaseKey>
-        
-        <!-- App ID from LogAI Dashboard -->
+    <!-- LogAI Remote Appender - only appId is required! -->
+    <appender name="LOGAI" class="com.logai.remote.RemoteLogAppender">
+        <!-- Get your App ID from: https://logai-frontend-app.vercel.app/settings -->
         <appId>0f445744-70ba-4422-9d97-7ecde2ac8eb3</appId>
         
-        <!-- Only send WARN and above to remote (to reduce noise) -->
+        <!-- Optional: Only send WARN and above (default is WARN) -->
         <threshold>WARN</threshold>
-        
-        <!-- Batch settings -->
-        <batchSize>10</batchSize>
-        <flushIntervalMs>2000</flushIntervalMs>
     </appender>
 
     <!-- Root logger -->
     <root level="DEBUG">
         <appender-ref ref="CONSOLE" />
-        <appender-ref ref="LOGAI_REMOTE" />
+        <appender-ref ref="LOGAI" />
     </root>
 
 </configuration>
-
