@@ -15,7 +15,7 @@
         <supabaseKey>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkbGh2ZHB1eGRkYnJ5aGVwdWtuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0MDQyNjksImV4cCI6MjA3OTk4MDI2OX0.8Pm2NH4twqhtJgBxdysbmB-y6V-dh_-FHwyUJUHG5kk</supabaseKey>
         
         <!-- App ID from LogAI Dashboard -->
-        <appId>cd471712-dabd-442d-9536-e35e1362d2e9</appId>
+        <appId>0f445744-70ba-4422-9d97-7ecde2ac8eb3</appId>
         
         <!-- Only send WARN and above to remote (to reduce noise) -->
         <threshold>WARN</threshold>
