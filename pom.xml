@@ -18,12 +18,20 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <!-- JitPack repository for LogAI SDK -->
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
+
     <dependencies>
-        <!-- LogAI Remote SDK -->
+        <!-- LogAI Remote SDK (from JitPack) -->
         <dependency>
-            <groupId>com.logai</groupId>
+            <groupId>com.github.Arun-Labana.logai-sdk</groupId>
             <artifactId>logai-remote</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>main-SNAPSHOT</version>
         </dependency>
 
         <!-- Logging -->
