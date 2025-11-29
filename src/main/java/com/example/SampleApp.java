@@ -1,195 +1,255 @@
 package com.example;
 
+import com.example.model.*;
+import com.example.repository.*;
+import com.example.service.*;
+import com.example.exception.*;
+import com.example.util.StringUtils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigDecimal;
+
 /**
- * Sample application to test LogAI remote logging.
- * This app generates various log levels including errors with stack traces.
+ * Sample E-Commerce Application for testing LogAI
+ * 
+ * This application simulates various error scenarios that will be
+ * captured by the LogAI SDK and analyzed by the AI engine.
  */
 public class SampleApp {
-
     private static final Logger logger = LoggerFactory.getLogger(SampleApp.class);
 
+    // Repositories
+    private final UserRepository userRepository;
+    private final OrderRepository orderRepository;
+    private final ProductRepository productRepository;
+
+    // Services
+    private final UserService userService;
+    private final ProductService productService;
+    private final PaymentService paymentService;
+    private final OrderService orderService;
+
+    public SampleApp() {
+        // Initialize repositories
+        this.userRepository = new UserRepository();
+        this.orderRepository = new OrderRepository();
+        this.productRepository = new ProductRepository();
+
+        // Initialize services
+        this.productService = new ProductService(productRepository);
+        this.paymentService = new PaymentService();
+        this.userService = new UserService(userRepository);
+        this.orderService = new OrderService(orderRepository, productRepository, productService, paymentService);
+    }
+
     public static void main(String[] args) {
-        System.out.println("╔═══════════════════════════════════════════╗");
-        System.out.println("║     LogAI Sample Application Started      ║");
-        System.out.println("╚═══════════════════════════════════════════╝");
-        System.out.println();
+        logger.info("=".repeat(60));
+        logger.info("Starting Sample E-Commerce Application");
+        logger.info("=".repeat(60));
 
         SampleApp app = new SampleApp();
         
-        // Generate various logs
-        app.runNormalOperations();
-        app.simulateWarnings();
-        app.simulateErrors();
-        
-        System.out.println();
-        System.out.println("✅ Sample logs generated! Check your LogAI dashboard.");
-        System.out.println("   Waiting 5 seconds for logs to flush...");
-        
-        // Wait for async logs to be sent
         try {
+            // Run various scenarios
+            app.runAllScenarios();
+        } catch (Exception e) {
+            logger.error("Application failed with unexpected error", e);
+        }
+
+        logger.info("=".repeat(60));
+        logger.info("Application finished - check LogAI dashboard for analysis");
+        logger.info("=".repeat(60));
+
+        // Wait for logs to flush
+        try {
+            logger.info("Waiting for logs to flush to cloud...");
             Thread.sleep(5000);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-        
-        System.out.println("✅ Done! Go to http://localhost:3000 and run a scan.");
     }
 
-    /**
-     * Simulate normal application operations
-     */
-    private void runNormalOperations() {
-        logger.info("Application starting up...");
-        logger.info("Loading configuration from environment");
-        logger.debug("Debug: Config loaded successfully");
-        logger.info("Connecting to database...");
-        logger.info("Database connection established");
-        logger.info("Starting background services...");
-        logger.info("Application ready to serve requests");
+    public void runAllScenarios() {
+        logger.info("\n--- Running All Test Scenarios ---\n");
+
+        // Scenario 1: Successful user registration and order
+        runSuccessfulOrderScenario();
+
+        // Scenario 2: Invalid email registration
+        runInvalidEmailScenario();
+
+        // Scenario 3: User not found
+        runUserNotFoundScenario();
+
+        // Scenario 4: Out of stock product
+        runOutOfStockScenario();
+
+        // Scenario 5: Payment failure
+        runPaymentFailureScenario();
+
+        // Scenario 6: Invalid quantity
+        runInvalidQuantityScenario();
+
+        // Scenario 7: Empty order processing
+        runEmptyOrderScenario();
+
+        // Scenario 8: Duplicate email registration
+        runDuplicateEmailScenario();
+
+        // Scenario 9: Weak password
+        runWeakPasswordScenario();
+
+        // Scenario 10: Check low stock
+        productService.checkLowStock();
     }
 
-    /**
-     * Simulate warning conditions
-     */
-    private void simulateWarnings() {
-        logger.warn("Connection pool running low - 2 connections remaining");
-        logger.warn("Request took longer than expected: 2500ms");
-        logger.warn("Cache miss rate is high: 45%");
-        logger.warn("Memory usage above threshold: 85%");
-    }
-
-    /**
-     * Simulate various error conditions
-     */
-    private void simulateErrors() {
-        // Error 1: NullPointerException
-        simulateNullPointerException();
-        
-        // Error 2: IllegalArgumentException
-        simulateIllegalArgumentException();
-        
-        // Error 3: Database connection error
-        simulateDatabaseError();
-        
-        // Error 4: Service timeout
-        simulateServiceTimeout();
-        
-        // Error 5: Validation error
-        simulateValidationError();
-    }
-
-    private void simulateNullPointerException() {
+    private void runSuccessfulOrderScenario() {
+        logger.info("\n[Scenario 1] Successful Order Flow");
         try {
-            UserService userService = new UserService();
-            userService.processUser(null);
+            // Create user
+            User user = userService.createUser("john@example.com", "John Doe", "SecurePass123");
+            logger.info("Created user: {}", user);
+
+            // Create order
+            Order order = orderService.createOrder(user.getId(), "123 Main St, City, 12345");
+            
+            // Add items
+            orderService.addItemToOrder(order.getId(), 1L, 1); // Laptop
+            orderService.addItemToOrder(order.getId(), 2L, 2); // 2x Mouse
+            
+            logger.info("Order created with {} items, total: {}", 
+                order.getItems().size(), 
+                StringUtils.formatCurrency(order.getTotalAmount()));
+
+            // Note: We skip processing to avoid payment gateway failure in success scenario
+            logger.info("Scenario 1 completed successfully!");
+
         } catch (Exception e) {
-            logger.error("Failed to process user request", e);
+            logger.error("Scenario 1 failed unexpectedly", e);
         }
     }
 
-    private void simulateIllegalArgumentException() {
+    private void runInvalidEmailScenario() {
+        logger.info("\n[Scenario 2] Invalid Email Registration");
         try {
-            OrderService orderService = new OrderService();
-            orderService.createOrder(-1, "invalid");
+            userService.createUser("not-an-email", "Test User", "Password123");
+            logger.warn("Expected validation error but succeeded!");
+        } catch (ValidationException e) {
+            logger.info("Caught expected validation error: {}", e.getMessage());
         } catch (Exception e) {
-            logger.error("Failed to create order", e);
+            logger.error("Unexpected error in scenario 2", e);
         }
     }
 
-    private void simulateDatabaseError() {
+    private void runUserNotFoundScenario() {
+        logger.info("\n[Scenario 3] User Not Found");
         try {
-            DatabaseService dbService = new DatabaseService();
-            dbService.executeQuery("SELECT * FROM non_existent_table");
+            userService.getUserById(99999L);
+            logger.warn("Expected UserNotFoundException but succeeded!");
+        } catch (UserNotFoundException e) {
+            logger.info("Caught expected error: {}", e.getMessage());
         } catch (Exception e) {
-            logger.error("Database query failed", e);
+            logger.error("Unexpected error in scenario 3", e);
         }
     }
 
-    private void simulateServiceTimeout() {
+    private void runOutOfStockScenario() {
+        logger.info("\n[Scenario 4] Out of Stock Product");
         try {
-            PaymentService paymentService = new PaymentService();
-            paymentService.processPayment("PAY-123", 99.99);
+            // Product 6 (Webcam) has 0 stock
+            productService.reserveStock(6L, 1);
+            logger.warn("Expected InsufficientStockException but succeeded!");
+        } catch (InsufficientStockException e) {
+            logger.info("Caught expected stock error: {}", e.getMessage());
         } catch (Exception e) {
-            logger.error("Payment processing failed", e);
+            logger.error("Unexpected error in scenario 4", e);
         }
     }
 
-    private void simulateValidationError() {
+    private void runPaymentFailureScenario() {
+        logger.info("\n[Scenario 5] Payment Failure");
         try {
-            ValidationService validationService = new ValidationService();
-            validationService.validateEmail("not-an-email");
+            // Create a user and order for payment test
+            User user = userService.createUser("payment-test@example.com", "Payment Test", "TestPass123");
+            Order order = orderService.createOrder(user.getId(), "456 Test Ave");
+            orderService.addItemToOrder(order.getId(), 3L, 1); // USB-C Hub
+
+            // Try to process - will fail due to payment gateway connection
+            orderService.processOrder(order.getId(), "4111111111111111");
+            
+        } catch (OrderProcessingException e) {
+            logger.error("Order processing failed: {}", e.getMessage(), e);
         } catch (Exception e) {
-            logger.error("Validation failed for user input", e);
+            logger.error("Unexpected error in scenario 5", e);
+        }
+    }
+
+    private void runInvalidQuantityScenario() {
+        logger.info("\n[Scenario 6] Invalid Quantity");
+        try {
+            User user = userService.createUser("qty-test@example.com", "Qty Test", "TestPass123");
+            Order order = orderService.createOrder(user.getId(), "789 Qty St");
+            
+            // Try to add negative quantity
+            orderService.addItemToOrder(order.getId(), 1L, -5);
+            logger.warn("Expected ValidationException but succeeded!");
+            
+        } catch (ValidationException e) {
+            logger.info("Caught expected validation error: {}", e.getMessage());
+        } catch (Exception e) {
+            logger.error("Unexpected error in scenario 6", e);
+        }
+    }
+
+    private void runEmptyOrderScenario() {
+        logger.info("\n[Scenario 7] Empty Order Processing");
+        try {
+            User user = userService.createUser("empty-order@example.com", "Empty Order", "TestPass123");
+            Order order = orderService.createOrder(user.getId(), "Empty St");
+            
+            // Try to process empty order
+            orderService.processOrder(order.getId(), "4111111111111111");
+            logger.warn("Expected OrderProcessingException but succeeded!");
+            
+        } catch (OrderProcessingException e) {
+            logger.info("Caught expected error: {}", e.getMessage());
+        } catch (Exception e) {
+            logger.error("Unexpected error in scenario 7", e);
+        }
+    }
+
+    private void runDuplicateEmailScenario() {
+        logger.info("\n[Scenario 8] Duplicate Email Registration");
+        try {
+            // First registration should succeed (if not already registered)
+            try {
+                userService.createUser("duplicate@example.com", "First User", "Password123");
+            } catch (ValidationException e) {
+                // Already exists from previous run, continue
+            }
+            
+            // Second registration should fail
+            userService.createUser("duplicate@example.com", "Second User", "Password456");
+            logger.warn("Expected ValidationException but succeeded!");
+            
+        } catch (ValidationException e) {
+            logger.info("Caught expected validation error: {}", e.getMessage());
+        } catch (Exception e) {
+            logger.error("Unexpected error in scenario 8", e);
+        }
+    }
+
+    private void runWeakPasswordScenario() {
+        logger.info("\n[Scenario 9] Weak Password");
+        try {
+            userService.createUser("weak-pass@example.com", "Weak Pass User", "abc");
+            logger.warn("Expected ValidationException but succeeded!");
+        } catch (ValidationException e) {
+            logger.info("Caught expected validation error: {}", e.getMessage());
+        } catch (Exception e) {
+            logger.error("Unexpected error in scenario 9", e);
         }
     }
 }
-
-/**
- * Simulated User Service
- */
-class UserService {
-    public void processUser(String userId) {
-        if (userId == null) {
-            throw new NullPointerException("User ID cannot be null");
-        }
-        // Process user...
-    }
-}
-
-/**
- * Simulated Order Service
- */
-class OrderService {
-    public void createOrder(int quantity, String productId) {
-        if (quantity <= 0) {
-            throw new IllegalArgumentException("Quantity must be positive, got: " + quantity);
-        }
-        if (productId == null || productId.isEmpty()) {
-            throw new IllegalArgumentException("Product ID cannot be empty");
-        }
-        // Create order...
-    }
-}
-
-/**
- * Simulated Database Service
- */
-class DatabaseService {
-    public void executeQuery(String sql) {
-        // Simulate a database error
-        throw new RuntimeException("Database error: Table 'non_existent_table' doesn't exist");
-    }
-}
-
-/**
- * Simulated Payment Service
- */
-class PaymentService {
-    public void processPayment(String paymentId, double amount) {
-        // Simulate nested exception
-        try {
-            connectToPaymentGateway();
-        } catch (Exception e) {
-            throw new RuntimeException("Payment processing failed for " + paymentId, e);
-        }
-    }
-
-    private void connectToPaymentGateway() {
-        throw new RuntimeException("Connection timed out: payment-gateway.example.com:443");
-    }
-}
-
-/**
- * Simulated Validation Service
- */
-class ValidationService {
-    public void validateEmail(String email) {
-        if (email == null || !email.contains("@")) {
-            throw new IllegalStateException("Invalid email format: " + email);
-        }
-    }
-}
-
